@@ -22,6 +22,7 @@ app.use("/Auth", require("./routes/auth"));
 
 app.use(verifyJwt);
 
+app.use("/Book", require("./routes/book"));
 mongoose.connection.once("open", () => {
   console.log("Connected to MongoDB");
   app.listen(3500);

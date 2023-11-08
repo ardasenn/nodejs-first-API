@@ -49,7 +49,7 @@ const handleLogin = async (req, res) => {
         },
       },
       process.env.ACCES_TOKEN_SECRET,
-      { expiresIn: "5m" }
+      { expiresIn: "5 minutes" }
     );
     const refreshToken = jwt.sign(
       {
@@ -71,4 +71,31 @@ const handleLogin = async (req, res) => {
   }
 };
 
-module.exports = { handleRegister, handleLogin };
+const handleRefreshRoken = async (req, res) => {
+  const cookies = req.cookies;
+  if (!cookies?.jwt) return res.sendStatus(401);
+  const refreshToken = cookies.jwt;
+  const user = await User.findOne({ refreshToken }).exec();
+
+  if (!user) {
+    return res.sendStatus(403);
+  }
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
+    if (err || user.email !== decoded.email) {
+      return res.sendStatus(403);
+    }
+    const roles = Object.values(user.roles);
+    const accessToken = jwt.sign(
+      {
+        UserInfo: {
+          email: decoded.email,
+          roles: roles,
+        },
+      },
+      process.env.ACCES_TOKEN_SECRET,
+      { expiresIn: "5 minutes" }
+    );
+    res.json({ accessToken });
+  });
+};
+module.exports = { handleRegister, handleLogin, handleRefreshRoken };
